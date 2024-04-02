@@ -1,0 +1,39 @@
+upload de imagem com nodejs
+guarda imagem na db mysql
+E enviar essa imagem via json
+
+---------------------------------
+Lembretes
+Com essa rota adicionada, agora você pode acessar as imagens no front-end usando a URL fornecida pelo servidor. 
+Por exemplo, se a sua imagem tiver o nome abc123_imagem.png, você pode acessá-la no front-end através da rota http://seuservidor.com/uploads/abc123_imagem.png.
+
+Lembre-se de ajustar o endereço e a porta conforme necessário. Além disso, certifique-se de ter os caminhos corretos para as imagens no seu front-end.
+
+exemplo no html:
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo de Exibição de Imagens</title>
+</head>
+<body>
+    <h1>Imagens de Usuários</h1>
+    <div id="imagens"></div>
+
+    <script>
+        fetch('http://seuservidor.com/usuarios')
+            .then(response => response.json())
+            .then(data => {
+                const imagensDiv = document.getElementById('imagens');
+                data.forEach(usuario => {
+                    const img = document.createElement('img');
+                    img.src = `http://seuservidor.com/uploads/${usuario.filename}`;
+                    img.alt = usuario.nome;
+                    imagensDiv.appendChild(img);
+                });
+            })
+            .catch(error => console.error('Erro ao carregar imagens:', error));
+    </script>
+</body>
+</html>
