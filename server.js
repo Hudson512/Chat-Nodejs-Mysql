@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
+const path = require('path')
 const multer  = require('multer');
 const upload = multer({ dest: 'uploads/' })
 
@@ -23,6 +24,7 @@ db.connect((err) => {
 });
 
 // Middleware
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -80,13 +82,15 @@ app.post('/login', (req, res) => {
         if (err) {
             throw err;
         }
-        const id = result.id;
+        
         if (result.length > 0) {
             // Credenciais corretas
-            res.status(301).redirect(`/home/${id}`);
+            //res.status(301).redirect(`/home/${id}`);
+            const id = result[0].pk_user_id;
+            res.json({message: `/home/${id}`});
         } else {
             // Credenciais incorretas
-            res.status(401).send('Nome de usuário ou senha incorretos');
+            res.status(401).json({message: 'Nome de usuário ou senha incorretos'});
         }
     });
 });
@@ -188,7 +192,7 @@ app.delete('/home/delete/:id', (req, res) => {
 
 // Iniciar o servidor
 app.listen(port, () => {
-    console.log(`Servidor rodando na porta http://localhost/${port}`);
+    console.log(`Servidor rodando na porta http://localhost:${port}`);
 });
 
 

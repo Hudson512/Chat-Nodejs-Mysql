@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+
+<body>
+    <h1>Login</h1>
+    <form id="loginForm">
+        <div>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Login</button>
+    </form>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Impede o envio padrão do formulário
+
+            const formData = new FormData(this); // Obtém os dados do formulário
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            try {
+                const response = await fetch('http://localhost:3000/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Define o cabeçalho Content-Type como application/json
+                    },
+                    body: JSON.stringify(jsonData) // Envia os dados serializados em JSON
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    console.log(responseData.message);
+                    window.location.href = responseData.message; // Redireciona para a página home em caso de sucesso
+                } else {
+                    alert('Login falhou. Verifique suas credenciais.'); // Exibe mensagem de erro em caso de falha
+                }
+            } catch (error) {
+                console.error('Erro ao fazer login:', error);
+                alert('Erro ao fazer login. Por favor, tente novamente.'); // Exibe mensagem de erro em caso de falha de comunicação com o servidor
+            }
+        });
+    </script>
+</body>
+
+</html>
