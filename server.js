@@ -1,4 +1,6 @@
 const express = require('express');
+const { createServer } = require("node:http");
+const { Server } = require("socket.io");
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const path = require('path')
@@ -6,6 +8,10 @@ const cors = require("cors");
 
 
 const app = express();
+const server = createServer(app);
+const io = new Server(server, {
+  connectionStateRecovery: {}
+});
 const port = 3000;
 
 // Configuração do MySQL
@@ -29,7 +35,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-    db.query('SELECT COUNT(*) from users',(err, results) => {
+    db.query('SELECT COUNT(*) AS users from users',(err, results) => {
         if (err){
             res.json({err: "Erro na BD"});
         }
@@ -109,6 +115,19 @@ app.get('/home/:id', (req, res) => {
     
 });
 
+app.get("/home/messages/:senderId/:reveiverId", (req, res) => {
+    
+    db.query('SELECT msg FROM messages WHERE fk_sender_id = ? AND fk_reciever_id = ?', [req.params.senderId, req.params.reveiverId], (err, results) => {
+        if (err){ socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+        if (results.length > 0){
+            res.json(results);
+        }else{
+            res.json({message: "Não há mensagem nessa conversa"})
+        }
+        
+    });
+});
+
 //----------------------------------------- Atualizar um cliente existente
 app.put('/user/:id/update', (req, res) => {
     const id = req.params.id;
@@ -125,12 +144,13 @@ app.put('/user/:id/update', (req, res) => {
         }
     }
 
-    db.query('SELECT * FROM users WHERE pk_user_id = ?', [id], (err, result) => {
+    db.query('SELECT * FROM users WHERE pk_user_id = ?', [id], (err, results) => {
         if (err) {
             res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
-        if (result.length > 0) {
-            const existingUser = result[0];
+        if (results.length > 0) {
+            
+            const existingUser = results[0];
             const newdata = {
                 username: comp(username, existingUser.username),
                 name: comp(name, existingUser.name),
@@ -138,18 +158,22 @@ app.put('/user/:id/update', (req, res) => {
                 password: comp(password, existingUser.password),
                 language: comp(language, existingUser.language)
             };
-
-            db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id], (err, result) => {
+            //console.log(newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id)
+            
+            db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id], (err, results) => {
                 if (err) {
-                    res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
+                    res.status(500).json({erro: "Erro no banco de dados, tente novamente"});
                 }
-                res.json({ message: "Usuário atualizado com sucesso!"});
+                res.json({ message: "Usuário atualizado com sucesso!", resultado: results});
             });
+            //res.json(newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id);
         } else {
             res.status(400).json({ message: 'Usuário não encontrado' });
         }
+        
     });
 });
+
 
 //----------------------------------------- Excluir um cliente
 app.delete('/user/:id/delete', (req, res) => {
@@ -162,12 +186,43 @@ app.delete('/user/:id/delete', (req, res) => {
     });
 });
 
+io.on('connection', async (socket) => {
+    socket.on('chat message', async (msg, user_sender_id, user_reciever_id) => {
+      let result;
+      try {
+        db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg) VALUES (?, ?, ?)', [user_sender_id, user_reciever_id, msg], (err, results) => {
+            if (err){
+                io.emit('chat message', msg, "Erro ao gravar a msg na base de dados");
+            }
+            result = results[0];
+        });
+      } catch (e) {
+        // TODO handle the failure
+        return;
+      }
+      io.emit('chat message', msg, result.pk_message_id, result.fk_sender_id, result.fk_reciever_id);
+    });  
+  
+    if (!socket.recovered) {
+      // if the connection state recovery was not successful
+      try {
+        db.query('SELECT msg FROM messages WHERE fk_sender_id = ? AND fk_reciever_id = ?', [user_sender_id, user_reciever_id], (err, results) => {
+            if (err){ socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+            socket.emit('chat message', results);
+        });
+      } catch (e) {
+        // something went wrong
+        return;
+      }
+    }
+});
+  
 
 
 
 // Iniciar o servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando na porta http://localhost:${port}`);
+server.listen(3000, () => {
+    console.log("server running at http://localhost:3000");
 });
 
 
