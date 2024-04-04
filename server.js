@@ -2,8 +2,8 @@ const express = require('express');
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
 const path = require('path')
-const multer  = require('multer');
-const upload = multer({ dest: 'uploads/' })
+const cors = require("cors");
+
 
 const app = express();
 const port = 3000;
@@ -24,70 +24,59 @@ db.connect((err) => {
 });
 
 // Middleware
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.get('/', (req, res) => {
-    res.send("Ola...");
+    db.query('SELECT COUNT(*) from users',(err, results) => {
+        if (err){
+            res.json({err: "Erro na BD"});
+        }
+        res.json(results);
+    });
 });
 
-/**
- * 
- *  CADASTRO
- * 
- */
-app.post('/cadastro',upload.single('imagem'), (req, res) => {
+//----------------------------------------- Cadastro
+app.post('/cadastro', (req, res) => {
     const { username, name, email, password, language} = req.body;
-    const { filename, path } = req.file;
 
 
     // Verifica se o usuário já existe no banco de dados
-    db.query('SELECT * FROM users WHERE username = ?', [username], (err, result) => {
+    db.query('SELECT * FROM users WHERE username = ? AND email = ?', [username, email], (err, result) => {
         if (err) {
-            throw err;
+            res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
 
         if (result.length > 0) {
             // Usuário já existe
-            res.status(400).json({message: 'Nome de usuário já está em uso'});
+            res.status(400).json({erro: 'Nome de usuário ou email já está em uso no sistema.'});
         } else {
             // Inserir dados no banco de dados
-            const timestamp = Date.now();
-            const novoNomeArquivo = `${timestamp}_${filename}`;
-            db.query('INSERT INTO users (username, name, email, password, language, profilepic, pathpic) VALUES (?, ?, ?, ?, ?, ?, ?)', [username, name, email, password, language, novoNomeArquivo, path], (err, result) => {
+            db.query('INSERT INTO users (username, name, email, password, language) VALUES (?, ?, ?, ?, ?)', [username, name, email, password, language], (err, result) => {
                 if (err) {
-                    throw err;
+                    res.status(500).json({message: 'Erro no banco de dados, tente novamente.'});
                 }
-                console.log('Usuario add com sucesso!');
-                const id = result.insertId;
-                console.log(`New-id: ${id}`);
-                res.status(301).redirect(`/home/${id}`);
+                res.json({message: "Usuário criado com sucesso"});
             });
            
         }
     });
 });
 
-/**
- * 
- *  LOGIN
- * 
- */
+//----------------------------------------- Login
 app.post('/login', (req, res) => {
     const {email, password} = req.body;
 
     // Consulta ao banco de dados para verificar as credenciais de login
     db.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, result) => {
         if (err) {
-            throw err;
+            res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
         
         if (result.length > 0) {
-            // Credenciais corretas
-            //res.status(301).redirect(`/home/${id}`);
             const id = result[0].pk_user_id;
-            res.json({message: `/home/${id}`});
+            res.json({user_id: id});
         } else {
             // Credenciais incorretas
             res.status(401).json({message: 'Nome de usuário ou senha incorretos'});
@@ -95,16 +84,13 @@ app.post('/login', (req, res) => {
     });
 });
 
-/**
- * HOME
- * 
- */
+//----------------------------------------- Home
 app.get('/home/:id', (req, res) => {
     const id = req.params.id;
 
     db.query(`SELECT * FROM users WHERE pk_user_id = ${id}`, (err, result) => {
         if (err){
-            throw err;
+            res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
         var dados_perfil = result;
         db.query(`SELECT * FROM users WHERE pk_user_id != ${id}`, (err, result) => {
@@ -114,7 +100,7 @@ app.get('/home/:id', (req, res) => {
             let lista_de_users = result;
             res.json({ 
                 dados_perfil: dados_perfil,
-                lista_de_users: lista_de_users
+                lista_contactos: lista_de_users
             });
             
         })
@@ -123,15 +109,8 @@ app.get('/home/:id', (req, res) => {
     
 });
 
-//Rota para acessar imagem pelo front
-//Ex: ler o ficheiro notas.txt
-app.get('/uploads/:filename', (req, res) => {
-    const filename = req.params.filename;
-    res.sendFile(path.join(__dirname, 'uploads', filename));
-});
-
-// Atualizar um cliente existente
-app.put('/home/update/:id', (req, res) => {
+//----------------------------------------- Atualizar um cliente existente
+app.put('/user/:id/update', (req, res) => {
     const id = req.params.id;
     const { username, name, email, password, language } = req.body;
 
@@ -148,7 +127,7 @@ app.put('/home/update/:id', (req, res) => {
 
     db.query('SELECT * FROM users WHERE pk_user_id = ?', [id], (err, result) => {
         if (err) {
-            throw err;
+            res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
         if (result.length > 0) {
             const existingUser = result[0];
@@ -162,9 +141,9 @@ app.put('/home/update/:id', (req, res) => {
 
             db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id], (err, result) => {
                 if (err) {
-                    throw err;
+                    res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
                 }
-                res.json({ message: "Usuário atualizado com sucesso!", info: result });
+                res.json({ message: "Usuário atualizado com sucesso!"});
             });
         } else {
             res.status(400).json({ message: 'Usuário não encontrado' });
@@ -172,18 +151,14 @@ app.put('/home/update/:id', (req, res) => {
     });
 });
 
-// Excluir um cliente
-app.delete('/home/delete/:id', (req, res) => {
+//----------------------------------------- Excluir um cliente
+app.delete('/user/:id/delete', (req, res) => {
     const id = req.params.id;
     db.query('DELETE FROM users WHERE pk_user_id = ?', id, (err, result) => {
         if (err) {
-            throw err;
+            res.status(500).json({erro: 'Erro no banco de dados, tente novamente.'});
         }
-        console.log(`Usuario ${id}, eliminado com sucesso!`);
-        res.json({ 
-            message: "Usuário excluído com sucesso!",
-            info: result
-        });
+        res.json({ message: "Usuário eliminado com sucesso!",});
     });
 });
 
