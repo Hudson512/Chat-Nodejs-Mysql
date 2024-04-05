@@ -1,58 +1,134 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Socket.IO chat</title>
+  <style>
+    body {
+      margin: 0;
+      padding-bottom: 3rem;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    #form {
+      background: rgba(0, 0, 0, 0.15);
+      padding: 0.25rem;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      height: 3rem;
+      box-sizing: border-box;
+      backdrop-filter: blur(10px);
+    }
+
+    #input {
+      border: none;
+      padding: 0 1rem;
+      flex-grow: 1;
+      border-radius: 2rem;
+      margin: 0.25rem;
+    }
+
+    #input:focus {
+      outline: none;
+    }
+
+    #form>button {
+      background: #333;
+      border: none;
+      padding: 0 1rem;
+      margin: 0.25rem;
+      border-radius: 3px;
+      outline: none;
+      color: #fff;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #messages>li {
+      padding: 0.5rem 1rem;
+    }
+
+    #messages>li:nth-child(odd) {
+      background: #efefef;
+    }
+  </style>
 </head>
 
 <body>
-    <h1>Login</h1>
-    <form id="loginForm">
-        <div>
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        <div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <button type="submit">Login</button>
-    </form>
+  <ul id="messages"></ul>
+  <form id="form" action="">
+    <input id="input" autocomplete="off" /><button>Send</button>
+  </form>
+  <script src="/socket.io/socket.io.js"></script>
+  <!--
+  <script type="module">
+    import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
+  </script>
+  -->
+  <script>
+    const socket = io({ auth: { serverOffset: 0 } });
+    //const socket = io("http://localhost:3000");
 
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async function (event) {
-            event.preventDefault(); // Impede o envio padrão do formulário
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
 
-            const formData = new FormData(this); // Obtém os dados do formulário
-            const jsonData = {};
-            formData.forEach((value, key) => {
-                jsonData[key] = value;
-            });
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (input.value) {
+        socket.emit('chat message', input.value, 2, 4);
+        input.value = '';
+        console.log("Ok");
+      }
+    });
+    function horaAtual() {
+      const agora = new Date();
+      const hora = agora.getHours();
+      const minuto = agora.getMinutes();
 
-            try {
-                const response = await fetch('http://localhost:3000/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json' // Define o cabeçalho Content-Type como application/json
-                    },
-                    body: JSON.stringify(jsonData) // Envia os dados serializados em JSON
-                });
+      return `${hora}:${minuto}`;
+    }
+    socket.on('chat message', (msg, msgId) => {
+      console.log(msg)
+      if (msg.length !== 0) {
+        const item = document.createElement('li');
+        item.textContent = `${msg} data:${horaAtual()}`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+        socket.auth.serverOffset = msgId;
+      }
+    });
+    window.addEventListener('load', async function () {
+      try {
+        const response = await fetch('http://localhost:3000/home/messages/2/4');
 
-                if (response.ok) {
-                    const responseData = await response.json();
-                    console.log(responseData.message);
-                    window.location.href = responseData.message; // Redireciona para a página home em caso de sucesso
-                } else {
-                    alert('Login falhou. Verifique suas credenciais.'); // Exibe mensagem de erro em caso de falha
-                }
-            } catch (error) {
-                console.error('Erro ao fazer login:', error);
-                alert('Erro ao fazer login. Por favor, tente novamente.'); // Exibe mensagem de erro em caso de falha de comunicação com o servidor
-            }
-        });
-    </script>
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log(responseData)
+          for (let index = 0; index < responseData.length; index++) {
+            const item = document.createElement('li');
+            item.textContent = responseData[index].msg;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight)
+          }
+        } else {
+          alert('Erro 0'); // Exibe mensagem de erro em caso de falha
+        }
+      } catch (error) {
+        console.error('Erro 1', error);
+        alert('Erro 1'); // Exibe mensagem de erro em caso de falha de comunicação com o servidor
+      }
+    });
+
+  </script>
 </body>
 
 </html>
