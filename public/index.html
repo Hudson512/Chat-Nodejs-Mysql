@@ -84,7 +84,7 @@
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', input.value, 2, 4);
+        socket.emit('chat message', input.value, 2, 4, "pt", "en");
         input.value = '';
         console.log("Ok");
       }

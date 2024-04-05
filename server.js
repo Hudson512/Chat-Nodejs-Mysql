@@ -1,11 +1,11 @@
 const express = require('express');
-const { createServer } = require("node:http");
-const { Server } = require("socket.io");
 const mysql = require('mysql');
 const bodyParser = require('body-parser');
-const path = require('path')
+const { createServer } = require("node:http");
+const { Server } = require("socket.io");
+const path = require('path');
 const cors = require("cors");
-
+const axios = require('axios');
 
 const app = express();
 const server = createServer(app);
@@ -169,16 +169,16 @@ app.put('/user/:id/update', (req, res) => {
             db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id], (err, results) => {
                 let arrobj = [];
                 if (err) {
-                    arrobj.push({msg: "Erro no banco de dados, tente novamente"})
+                    arrobj.push({ msg: "Erro no banco de dados, tente novamente" })
                     res.status(500).json(arrobj);
                 }
-                arrobj.push({msg: "Usuário atualizado com sucesso!"})
+                arrobj.push({ msg: "Usuário atualizado com sucesso!" })
                 res.json(arrobj);
             });
             //res.json(newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id);
         } else {
             let arrobj = [];
-            arrobj.push({msg: 'Usuário não encontrado'})
+            arrobj.push({ msg: 'Usuário não encontrado' })
             res.status(400).json(arrobj);
         }
 
@@ -192,25 +192,55 @@ app.delete('/user/:id/delete', (req, res) => {
     db.query('DELETE FROM users WHERE pk_user_id = ?', id, (err, results) => {
         let arrobj = [];
         if (err) {
-            arrobj.push({msg: 'Erro no banco de dados, tente novamente.'})
+            arrobj.push({ msg: 'Erro no banco de dados, tente novamente.' })
             res.status(500).json(arrobj);
         }
-        arrobj.push({msg: "Usuário eliminado com sucesso!"})
+        arrobj.push({ msg: "Usuário eliminado com sucesso!" })
         res.json(arrobj);
     });
 });
 
+//----------------------------------------- Envio de SMS
+
+
+async function traduzirTexto(texto, idiomaOrigem, idiomaDestino) {
+    try {
+        const response = await axios.get('https://api.mymemory.translated.net/get', {
+            params: {
+                q: texto,
+                langpair: `${idiomaOrigem}|${idiomaDestino}`
+            }
+        });
+
+        // Verifica se a resposta foi bem-sucedida
+        if (response.status === 200) {
+            const traducao = response.data.responseData.translatedText;
+            return traducao;
+        } else {
+            console.log('Erro ao obter a tradução');
+        }
+    } catch (error) {
+        console.error('Ocorreu um erro:', error);
+    }
+}
+
+
 io.on('connection', async (socket) => {
 
-    socket.on('chat message', async (msg, user_sender_id, user_reciever_id) => {
+    socket.on('chat message', async (msg, user_sender_id, user_reciever_id, languageSender, languageReceiver) => {
         try {
             if (msg.length !== 0) {
-                db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg) VALUES (?, ?, ?)', [user_sender_id, user_reciever_id, msg], (err, results) => {
+                var texto = msg;
+                if (languageSender !== languageReceiver) {
+                   texto = await traduzirTexto(texto, languageSender, languageReceiver);
+                   console.log(texto);
+                }
+                db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg) VALUES (?, ?, ?)', [user_sender_id, user_reciever_id, texto], (err, results) => {
                     if (err) {
-                      io.emit('chat message', msg, "Erro ao gravar a msg na base de dados");
+                        io.emit('chat message', texto, "Erro ao gravar a msg na base de dados");
                     }
                     global.msgSendId = results.insertId;
-                    io.emit('chat message', msg, global.msgSendId);
+                    io.emit('chat message', texto, global.msgSendId);
                     console.log(global.msgSendId)
                 });
             }
