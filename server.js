@@ -134,6 +134,21 @@ app.get("/home/messages/:senderId/:reveiverId", (req, res) => {
     });
 });
 
+app.get("/home/messages/last/:senderId/:reveiverId", (req, res) => {
+
+    db.query('SELECT msg, msg_language FROM messages WHERE fk_sender_id = ? AND fk_reciever_id = ?', [req.params.senderId, req.params.reveiverId], (err, results) => {
+        if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+        if (results.length > 0) {
+            res.json(results[results.length - 1]);
+        } else {
+            let arrobj = [];
+            arrobj.push({ msg: "Não há mensagem nessa conversa" });
+            res.json(arrobj)
+        }
+
+    });
+});
+
 //----------------------------------------- Atualizar um cliente existente
 app.put('/user/:id/update', (req, res) => {
     const id = req.params.id;
@@ -230,18 +245,15 @@ io.on('connection', async (socket) => {
     socket.on('chat message', async (msg, user_sender_id, user_reciever_id, languageSender, languageReceiver) => {
         try {
             if (msg.length !== 0) {
-                var texto = msg;
-                if (languageSender !== languageReceiver) {
-                   texto = await traduzirTexto(texto, languageSender, languageReceiver);
-                   console.log(texto);
-                }
-                db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg) VALUES (?, ?, ?)', [user_sender_id, user_reciever_id, texto], (err, results) => {
+                db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg, msg_language) VALUES (?, ?, ?, ?)', [user_sender_id, user_reciever_id, msg, languageSender], (err, results) => {
                     if (err) {
-                        io.emit('chat message', texto, "Erro ao gravar a msg na base de dados");
+                        io.emit('chat message', msg, "Erro ao gravar a msg na base de dados");
                     }
                     global.msgSendId = results.insertId;
-                    io.emit('chat message', texto, global.msgSendId);
-                    console.log(global.msgSendId)
+                    global.languageEmissor = languageSender;
+                    global.languageReceptor = languageReceiver;
+                    console.log(msg)
+                    io.emit('chat message', msg, global.msgSendId, languageSender, languageReceiver);
                 });
             }
         } catch (e) {
@@ -256,7 +268,7 @@ io.on('connection', async (socket) => {
         try {
             db.query('SELECT msg FROM messages WHERE pk_message_id = ?', [global.msgSendId], (err, results) => {
                 if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
-                socket.emit('chat message', results, global.msgSendId);
+                socket.emit('chat message', results, global.msgSendId, global.languageEmissor, global.languageReceptor);
             });
         } catch (e) {
             // something went wrong

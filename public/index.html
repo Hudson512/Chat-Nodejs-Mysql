@@ -68,51 +68,93 @@
     <input id="input" autocomplete="off" /><button>Send</button>
   </form>
   <script src="/socket.io/socket.io.js"></script>
-  <!--
-  <script type="module">
-    import { io } from "https://cdn.socket.io/4.7.5/socket.io.esm.min.js";
-  </script>
-  -->
-  <script>
-    const socket = io({ auth: { serverOffset: 0 } });
-    //const socket = io("http://localhost:3000");
 
+  <script>
+    /***
+     * ---------------------------- Declaração de variaveis
+    */
+    const socket = io({ auth: { serverOffset: 0 } });
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
+    var id_user = 2;
+    var id_receptor = 4;
+    var language_user = "en";
+    var language_receptor = "pt";
 
+    /***
+     * ----------------------------  Funções auxiliares
+    */
+    async function traduzirTexto(msgF, languageSenderF, languageReceiverF) {
+      const texto = msgF;
+      const idiomaOrigem = languageSenderF;
+      const idiomaDestino = languageReceiverF;
+      console.log(`: ${texto} , ${idiomaOrigem} , ${idiomaDestino}`)
+      try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${texto}&langpair=${idiomaOrigem}|${idiomaDestino}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const traducao = data.responseData.translatedText;
+          console.log(`Tra: ${traducao}, ${data}`)
+          return traducao;
+        } else {
+          console.log(data)
+          return msgF;
+        }
+      } catch (error) {
+        console.log(error)
+        return msgF;
+      }
+    }
+
+    /***
+     * ------------------------  Eventos
+    */
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (input.value) {
-        socket.emit('chat message', input.value, 2, 4, "pt", "en");
+        socket.emit('chat message', input.value, id_user, id_receptor, language_user, language_receptor);
         input.value = '';
         console.log("Ok");
       }
     });
-    function horaAtual() {
-      const agora = new Date();
-      const hora = agora.getHours();
-      const minuto = agora.getMinutes();
 
-      return `${hora}:${minuto}`;
-    }
-    socket.on('chat message', (msg, msgId) => {
-      console.log(msg)
+    socket.on('chat message', async function (msg, msgId, languageSender, languageReceiver) {
+      console.log(`Msg:${msg}, ${msgId}, ${languageSender}, ${languageReceiver}`)
       if (msg.length !== 0) {
-        const item = document.createElement('li');
-        item.textContent = `${msg} data:${horaAtual()}`;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollHeight);
-        socket.auth.serverOffset = msgId;
+        try {
+          const response = await fetch(`http://localhost:3000/home/messages/last/${id_user}/${id_receptor}`);
+          console.log(response)
+          if (response.ok) {
+            const responseData = await response.json();
+            console.log(responseData.msg)
+            let msgTemp = responseData.msg;
+            if (language_user !== responseData.msg_language) {
+              msgTemp = await traduzirTexto(msgTemp, responseData.msg_language, language_user);
+              console.log(`Passei: ${msgTemp}`);
+            }
+            const item = document.createElement('li');
+            item.textContent = msgTemp;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+            socket.auth.serverOffset = msgId;
+          } else {
+            alert('Erro 0');
+          }
+        } catch {
+          console.error('Erro 1');
+          alert('Erro 1');
+        }
       }
     });
+    /*
     window.addEventListener('load', async function () {
       try {
-        const response = await fetch('http://localhost:3000/home/messages/2/4');
+        const response = await fetch(`http://localhost:3000/home/messages/${id_user}/${id_receptor}`);
 
         if (response.ok) {
           const responseData = await response.json();
-          console.log(responseData)
           for (let index = 0; index < responseData.length; index++) {
             const item = document.createElement('li');
             item.textContent = responseData[index].msg;
@@ -120,13 +162,14 @@
             window.scrollTo(0, document.body.scrollHeight)
           }
         } else {
-          alert('Erro 0'); // Exibe mensagem de erro em caso de falha
+          alert('Erro 0'); 
         }
       } catch (error) {
         console.error('Erro 1', error);
-        alert('Erro 1'); // Exibe mensagem de erro em caso de falha de comunicação com o servidor
+        alert('Erro 1'); 
       }
     });
+    */
 
   </script>
 </body>
