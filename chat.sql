@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 06/04/2024 às 16:30
+-- Tempo de geração: 08/04/2024 às 16:48
 -- Versão do servidor: 10.4.28-MariaDB
 -- Versão do PHP: 8.2.4
 
@@ -33,7 +33,7 @@ CREATE TABLE `messages` (
   `fk_reciever_id` int(11) NOT NULL,
   `sending_data` timestamp NOT NULL DEFAULT current_timestamp(),
   `msg` text DEFAULT NULL,
-  `msg_language` varchar(2) NOT NULL DEFAULT 'pt'
+  `msg_language` varchar(2) NOT NULL DEFAULT 'PT'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -51,15 +51,6 @@ CREATE TABLE `users` (
   `language` varchar(2) NOT NULL,
   `registrydate` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Despejando dados para a tabela `users`
---
-
-INSERT INTO `users` (`pk_user_id`, `username`, `name`, `email`, `password`, `language`, `registrydate`) VALUES
-(1, 'hudson51', 'Hudson', 'hmateque@gmail.com', '12345678', 'En', '2024-04-02 20:07:37'),
-(2, 'silvio', 'Sudson', 'hmateque@gmail.com', '12345678', 'pt', '2024-04-02 20:18:11'),
-(4, 'Nata07', 'Nata000', 'nata01@gmail.com', '1234567', 'pt', '2024-04-04 14:12:18');
 
 --
 -- Índices para tabelas despejadas
@@ -87,13 +78,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `messages`
 --
 ALTER TABLE `messages`
-  MODIFY `pk_message_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
+  MODIFY `pk_message_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT de tabela `users`
 --
 ALTER TABLE `users`
-  MODIFY `pk_user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `pk_user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Restrições para tabelas despejadas

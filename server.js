@@ -53,12 +53,12 @@ app.post('/cadastro', (req, res) => {
 
 
     // Verifica se o usuário já existe no banco de dados
-    db.query('SELECT * FROM users WHERE username = ? AND email = ?', [username, email], (err, result) => {
+    db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], (err, results) => {
         if (err) {
             res.status(500).json({ erro: 'Erro no banco de dados, tente novamente.' });
         }
-
-        if (result.length > 0) {
+        
+        if (results.length > 0) {
             // Usuário já existe
             res.status(400).json({ erro: 'Nome de usuário ou email já está em uso no sistema.' });
         } else {
@@ -77,7 +77,7 @@ app.post('/cadastro', (req, res) => {
 //----------------------------------------- Login
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
-
+    console.log(req.body)
     // Consulta ao banco de dados para verificar as credenciais de login
     db.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, result) => {
         if (err) {
@@ -119,9 +119,54 @@ app.get('/home/:id', (req, res) => {
 
 });
 
+app.get("/home/messages/send/:userId", (req, res) => {
+
+    db.query('SELECT msg FROM messages WHERE fk_sender_id = ?', [req.params.userId], (err, results) => {
+        if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+        if (results.length > 0) {
+            res.json(results);
+        } else {
+            let arrobj = [];
+            arrobj.push({ msg: "Não há mensagem nessa conversa"});
+            res.json(arrobj)
+        }
+
+    });
+});
+
+app.get("/home/messages/receive/:userId", (req, res) => {
+
+    db.query('SELECT msg FROM messages WHERE fk_reciever_id = ?', [req.params.userId], (err, results) => {
+        if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+        if (results.length > 0) {
+            res.json(results);
+        } else {
+            let arrobj = [];
+            arrobj.push({ msg: "Não há mensagem nessa conversa"});
+            res.json(arrobj)
+        }
+
+    });
+});
+
+app.get("/home/messages/:userId", (req, res) => {
+
+    db.query('SELECT msg, fk_sender_id, fk_reciever_id FROM messages WHERE fk_sender_id = ? OR fk_reciever_id = ?', [req.params.userId, req.params.userId], (err, results) => {
+        if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
+        if (results.length > 0) {
+            res.json(results);
+        } else {
+            let arrobj = [];
+            arrobj.push({ msg: "Não há mensagem nessa conversa"});
+            res.json(arrobj)
+        }
+
+    });
+});
+
 app.get("/home/messages/:senderId/:reveiverId", (req, res) => {
 
-    db.query('SELECT msg FROM messages WHERE fk_sender_id = ? AND fk_reciever_id = ?', [req.params.senderId, req.params.reveiverId], (err, results) => {
+    db.query('SELECT msg, fk_sender_id, msg_language, sending_data FROM messages WHERE (fk_sender_id = ? AND fk_reciever_id = ?) OR (fk_sender_id = ? AND fk_reciever_id = ?)', [req.params.senderId, req.params.reveiverId, req.params.reveiverId, req.params.senderId], (err, results) => {
         if (err) { socket.emit('chat message', "Erro ao apresentar as mensagens"); }
         if (results.length > 0) {
             res.json(results);
@@ -200,6 +245,18 @@ app.put('/user/:id/update', (req, res) => {
     });
 });
 
+app.get("/users/:pt", (req, res) => {
+    db.query('SELECT COUNT(*) AS users FROM users WHERE language = ?', [req.params.pt], (err, results) => {
+        if (err) {
+            res.json({ err: "Erro na BD" });
+        } else {
+            // Extrair o número de usuários do objeto de resultados
+            const numUsers = results[0].users;
+            res.json({ users: numUsers });
+        }
+    });
+});
+
 
 //----------------------------------------- Excluir um cliente
 app.delete('/user/:id/delete', (req, res) => {
@@ -253,7 +310,7 @@ io.on('connection', async (socket) => {
                     global.languageEmissor = languageSender;
                     global.languageReceptor = languageReceiver;
                     console.log(msg)
-                    io.emit('chat message', msg, global.msgSendId, languageSender, languageReceiver);
+                    io.emit('chat message', msg, global.msgSendId, user_sender_id, user_reciever_id);
                 });
             }
         } catch (e) {
