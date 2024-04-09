@@ -19,17 +19,14 @@
             <div class="card">
                 <div class="row g-0 mx-0 px-0">
                     <!--ListaUsers-->
-                    <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; overflow-y: scroll;"
-                        id="listaUser">
-                        <div class="px-4 d-none d-md-block">
+                    <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; overflow-y: scroll;" id="listaUser">
+<!--                         <div class="px-4 d-none d-md-block">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
                                     <input type="text" class="form-control my-3" placeholder="Pesquisar...">
                                 </div>
                             </div>
-                        </div>
-
-
+                        </div> -->
                         <hr class="d-block d-lg-none mt-1 mb-0">
                     </div>
                     <div class="col-12 col-lg-7 col-xl-9" id="py1">
@@ -45,7 +42,7 @@
                             <div class="input-group">
                                 <textarea name="" id="input" class="form-control"
                                     placeholder="Digite sua mensagem"></textarea>
-                                <button type="submit" class="btn bg-light" style="height: fit-content;">Enviar</button>
+                                <button type="submit" class="btn" style="height: fit-content; background-color: #00ffa1!important;">Enviar</button>
                             </div>
                         </form>
                     </div>
@@ -98,7 +95,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">FEchar</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
@@ -181,7 +178,7 @@
         // Crie o elemento <div> para a insígnia
         let badge = document.createElement('div');
         badge.className = 'badge bg-success float-right';
-        badge.textContent = `${totalMsg}`;
+        badge.textContent = totalMsg/2;
 
         // Crie o elemento <div> para a seção da imagem e texto
         let divFlex = document.createElement('div');

@@ -16,13 +16,6 @@
       <div class="card">
         <div class="row g-0 mx-0 px-0">
           <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; overflow-y: scroll;">
-            <div class="px-4 d-none d-md-block">
-              <div class="d-flex align-items-center">
-                <div class="flex-grow-1">
-                  <input type="text" class="form-control my-3" placeholder="Pesquisar...">
-                </div>
-              </div>
-            </div>
             <a href="home.html" class="list-group-item list-group-item-action border-0">
               <div class="d-flex align-items-start">
                 <div class="icons"><ion-icon name="home"></ion-icon></div>
@@ -85,7 +78,7 @@
             <div class="py-2 px-4 border-bottom d-none d-lg-block">
               <div class="d-flex align-items-center py-1">
                 <div class="position-relative">
-                  <img src="assets/imgs/user.png" class="rounded-circle mr-1 userPic">
+                  <img src="assets/imgs/user.png" class="rounded-circle mr-1 userPic" id="userPic">
                 </div>
                 <div class="flex-grow-1 pl-3">
                   <strong id="nomeUsuario1"></strong>
@@ -107,7 +100,7 @@
                 <div class="wrapper">
                   <div class="profile-card js-profile-card">
                     <div class="profile-card__img">
-                      <img src="assets/imgs/user.png" alt="profile card">
+                      <img src="assets/imgs/user.png" alt="profile card" id="userPic2">
                     </div>
 
                     <div class="profile-card__cnt js-profile-cnt">
@@ -212,7 +205,7 @@
         document.getElementById("nomeUsuario1").textContent = usuario.name;
         document.getElementById("nomeUsuario2").textContent = usuario.name;
         document.getElementById("emailUsuario2").textContent = usuario.email;
-        document.getElementById("bandeira").src = `assets/imgs/${usuario.language}.png`
+        document.getElementById("bandeira").src = `assets/imgs/${usuario.language}.png`;
         document.getElementById("dataConta").textContent = `${dia}/${mes}/${ano}`;
       } else {
         alert('Erro: Não foi possível carregar os dados, tente novamente');
@@ -271,6 +264,8 @@
     var email = document.getElementById("email").value;
     var lingua = document.getElementById("lingua").value;
     var password = document.getElementById("password").value;
+
+    email = email.toLowerCase();
 
     // Objeto com os dados a serem enviados na requisição
     var data = {

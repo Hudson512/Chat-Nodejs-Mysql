@@ -12,17 +12,10 @@
 <body>
   <main class="content">
     <div class="container p-0">
-      <h1 class="h3 mb-3">CHAT TRADUTOR</h1>
+      <h1 class="h3 mb-3">INÍCIO</h1>
       <div class="card">
         <div class="row g-0 mx-0 px-0">
           <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; overflow-y: scroll;">
-            <div class="px-4 d-none d-md-block">
-              <div class="d-flex align-items-center">
-                <div class="flex-grow-1">
-                  <input type="text" class="form-control my-3" placeholder="Pesquisar...">
-                </div>
-              </div>
-            </div>
             <a href="" class="list-group-item list-group-item-action active border-0">
               <div class="d-flex align-items-start">
                 <div class="icons"><ion-icon name="home"></ion-icon></div>
@@ -85,7 +78,7 @@
             <div class="py-2 px-4 border-bottom d-none d-lg-block">
               <div class="d-flex align-items-center py-1">
                 <div class="position-relative">
-                  <img src="assets/imgs/user.png" class="rounded-circle mr-1 userPic">
+                  <img src="assets/imgs/user.png" class="rounded-circle mr-1 userPic" id="userPic">
                 </div>
                 <div class="flex-grow-1 pl-3">
                   <strong id="nomeUsuario"></strong>
@@ -100,8 +93,7 @@
             </div>
             <div class="position-relative">
               <div class="chat-messages p-4">
-                <link rel="stylesheet" type="text/css"
-                  href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/fonts/simple-line-icons/style.min.css">
+                <link rel="stylesheet" type="text/css"href="https://pixinvent.com/stack-responsive-bootstrap-4-admin-template/app-assets/fonts/simple-line-icons/style.min.css">
 
                 <div class="grey-bg container-fluid">
                   <section id="minimal-statistics">
@@ -170,7 +162,8 @@
                             <div class="card-body">
                               <div class="media d-flex">
                                 <div class="align-self-center">
-                                  <i class="icon-user success font-large-2 float-left"></i>
+                                  <!-- <i class="icon-user success font-large-2 float-left"></i> -->
+                                  <img src="assets/imgs/pt.png" width="30px">
                                 </div>
                                 <div class="media-body text-right">
                                   <h3 id="totalPt">0</h3>
@@ -189,7 +182,8 @@
                             <div class="card-body">
                               <div class="media d-flex">
                                 <div class="align-self-center">
-                                  <i class="icon-user success font-large-2 float-left"></i>
+                                  <!-- <i class="icon-user success font-large-2 float-left"></i> -->
+                                  <img src="assets/imgs/en.png" width="30px">
                                 </div>
                                 <div class="media-body text-right">
                                   <h3 id="totalEn">0</h3>
@@ -208,7 +202,8 @@
                             <div class="card-body">
                               <div class="media d-flex">
                                 <div class="align-self-center">
-                                  <i class="icon-user success font-large-2 float-left"></i>
+                                  <!-- <i class="icon-user success font-large-2 float-left"></i> -->
+                                  <img src="assets/imgs/fr.png" width="30px">
                                 </div>
                                 <div class="media-body text-right">
                                   <h3 id="totalFr">0</h3>
@@ -252,7 +247,7 @@
           let usuario = data.dados_perfil[0];
           let outrosUsuarios = data.lista_contactos;
           document.getElementById("nomeUsuario").textContent = usuario.name;
-          document.getElementById("language").src = `assets/imgs/${usuario.language}.png`
+          document.getElementById("language").src = `assets/imgs/${usuario.language}.png`;
           document.getElementById("totalUsuarios").textContent = outrosUsuarios.length + 1;
         } else {
           alert('Erro: Não foi possível carregar os dados, tente novamente');

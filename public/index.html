@@ -75,6 +75,8 @@
 			var email = document.getElementById("emailLogin").value;
 			var password = document.getElementById("passwordLogin").value;
 
+			email = email.toLowerCase();
+
 			// Objeto com os dados a serem enviados na requisição
 			var data = {
 				email: email,
@@ -120,6 +122,9 @@
 			var password = document.getElementById("password").value;
 			var confirmPassword = document.getElementById("confirmPassword").value;
 
+			email = email.toLowerCase();
+			lingua = lingua.toLowerCase();
+
 			// Verifica se os campos obrigatórios estão preenchidos
 			if (!nome || !username || !email || !lingua || !password || !confirmPassword) {
 				document.getElementById("errorCadastro").textContent = "Por favor, preencha todos os campos obrigatórios.";
@@ -163,7 +168,7 @@
 				})
 				.catch(error => {
 					console.error('Erro:', error);
-					document.getElementById("errorCadastro").textContent = "Erro ao fazer o cadastro, tente novamente";
+					document.getElementById("errorCadastro").textContent = "Erro ao fazer o cadastro, tente novamente!";
 					setInterval(() => {
 						window.location.reload();
 					}, 3000);
