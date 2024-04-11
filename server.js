@@ -210,7 +210,7 @@ app.put('/user/:id/update', (req, res) => {
             return value2;
         }
     }
-
+    const encrypt = base62Encrypt(password)
     db.query('SELECT * FROM users WHERE pk_user_id = ?', [id], (err, results) => {
         if (err) {
             res.status(500).json({ erro: 'Erro no banco de dados, tente novamente.' });
@@ -222,7 +222,7 @@ app.put('/user/:id/update', (req, res) => {
                 username: comp(username, existingUser.username),
                 name: comp(name, existingUser.name),
                 email: comp(email, existingUser.email),
-                password: comp(password, existingUser.password),
+                password: comp(encrypt, existingUser.password),
                 profile: comp(profile, existingUser.profile),
                 language: comp(language, existingUser.language)
             };
