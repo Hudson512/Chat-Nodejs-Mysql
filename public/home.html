@@ -247,6 +247,7 @@
           let usuario = data.dados_perfil[0];
           let outrosUsuarios = data.lista_contactos;
           document.getElementById("nomeUsuario").textContent = usuario.name;
+                document.getElementById("userPic").src = `assets/imgs/${usuario.profile}`;
           document.getElementById("language").src = `assets/imgs/${usuario.language}.png`;
           document.getElementById("totalUsuarios").textContent = outrosUsuarios.length + 1;
         } else {

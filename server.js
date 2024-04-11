@@ -49,37 +49,38 @@ app.get('/', (req, res) => {
 
 //----------------------------------------- Cadastro
 app.post('/cadastro', (req, res) => {
-    const { username, name, email, password, language } = req.body;
+  const { username, name, email, password, profilepic, language } = req.body;
 
 
-    // Verifica se o usuário já existe no banco de dados
-    db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], (err, results) => {
+  // Verifica se o usuário já existe no banco de dados
+  db.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], (err, results) => {
+    if (err) {
+      res.status(500).json({ erro: 'Erro no banco de dados, tente novamente.' });
+    }
+     
+    if (results.length > 0) {
+      // Usuário já existe
+      res.status(400).json({ erro: 'Nome de usuário ou email já está em uso no sistema.' });
+    } else {
+      // Inserir dados no banco de dados
+      const encrypt = base62Encrypt(password)
+      db.query('INSERT INTO users (username, name, email, password, language, profile) VALUES (?, ?, ?, ?, ?, ?)', [username, name, email, encrypt, language, profilepic], (err, result) => {
         if (err) {
-            res.status(500).json({ erro: 'Erro no banco de dados, tente novamente.' });
+          res.status(500).json({ message: 'Erro no banco de dados, tente novamente.' });
         }
-        
-        if (results.length > 0) {
-            // Usuário já existe
-            res.status(400).json({ erro: 'Nome de usuário ou email já está em uso no sistema.' });
-        } else {
-            // Inserir dados no banco de dados
-            db.query('INSERT INTO users (username, name, email, password, language) VALUES (?, ?, ?, ?, ?)', [username, name, email, password, language], (err, result) => {
-                if (err) {
-                    res.status(500).json({ message: 'Erro no banco de dados, tente novamente.' });
-                }
-                res.json({ message: "Usuário criado com sucesso" });
-            });
+        res.json({ message: "Usuário criado com sucesso", profilepic: profilepic });
+      });
 
-        }
-    });
+    }
+  });
 });
 
 //----------------------------------------- Login
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
-    console.log(req.body)
+    const encrypt = base62Encrypt(password)
     // Consulta ao banco de dados para verificar as credenciais de login
-    db.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, result) => {
+    db.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, encrypt], (err, result) => {
         if (err) {
             res.status(500).json({ erro: 'Erro no banco de dados, tente novamente.' });
         }
@@ -197,7 +198,7 @@ app.get("/home/messages/last/:senderId/:reveiverId", (req, res) => {
 //----------------------------------------- Atualizar um cliente existente
 app.put('/user/:id/update', (req, res) => {
     const id = req.params.id;
-    const { username, name, email, password, language } = req.body;
+    const { username, name, email, password, profile, language } = req.body;
 
     function comp(value1, value2) {
         if (value1 === null || value1 === undefined || value1 === '') {
@@ -222,11 +223,12 @@ app.put('/user/:id/update', (req, res) => {
                 name: comp(name, existingUser.name),
                 email: comp(email, existingUser.email),
                 password: comp(password, existingUser.password),
+                profile: comp(profile, existingUser.profile),
                 language: comp(language, existingUser.language)
             };
             //console.log(newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id)
 
-            db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.language, id], (err, results) => {
+            db.query('UPDATE users SET username = ?, name = ?, email = ?, password = ?, profile = ?, language = ? WHERE pk_user_id = ?', [newdata.username, newdata.name, newdata.email, newdata.password, newdata.profile, newdata.language, id], (err, results) => {
                 let arrobj = [];
                 if (err) {
                     arrobj.push({ msg: "Erro no banco de dados, tente novamente" })
@@ -294,6 +296,36 @@ async function traduzirTexto(texto, idiomaOrigem, idiomaDestino) {
     } catch (error) {
         console.error('Ocorreu um erro:', error);
     }
+}
+
+function base62Encrypt(str) {
+    const charset = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let result = "";
+
+    // Converte a string em uma sequência de bytes
+    const bytes = Array.from(str, char => char.charCodeAt(0));
+
+    // Converte cada byte em um número inteiro de 24 bits
+    let value = 0;
+    let bits = 0;
+    for (let i = 0; i < bytes.length; i++) {
+        value = (value << 8) | bytes[i];
+        bits += 8;
+
+        // Converte para Base62 sempre que tiver pelo menos 6 bits disponíveis
+        while (bits >= 6) {
+            bits -= 6;
+            result += charset[(value >> bits) & 0x3F];
+        }
+    }
+
+    // Se sobrarem bits não utilizados, adiciona-os à saída
+    if (bits > 0) {
+        value <<= (6 - bits);
+        result += charset[value & 0x3F];
+    }
+
+    return result;
 }
 
 

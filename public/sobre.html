@@ -159,6 +159,7 @@
                 let outrosUsuarios = data.lista_contactos;
 
                 document.getElementById("nomeUsuario").textContent = usuario.name;
+                document.getElementById("userPic").src = `assets/imgs/${usuario.profile}`;
                 document.getElementById("bandeira").src = `assets/imgs/${usuario.language}.png`;
             } else {
                 alert('Erro: Não foi possível carregar os dados, tente novamente');

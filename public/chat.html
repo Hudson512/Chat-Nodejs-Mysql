@@ -19,7 +19,7 @@
             <div class="card">
                 <div class="row g-0 mx-0 px-0">
                     <!--ListaUsers-->
-                    <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; overflow-y: scroll;" id="listaUser">
+                    <div class="col-12 col-lg-5 col-xl-3 border-right" style="max-height: 80vh; height: 80vh!important; overflow-y: scroll;" id="listaUser">
 <!--                         <div class="px-4 d-none d-md-block">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
@@ -39,11 +39,19 @@
                             </div>
                         </div>
                         <form class="flex-grow-0 py-3 px-4 border-top" id="form">
-                            <div class="input-group">
-                                <textarea name="" id="input" class="form-control"
-                                    placeholder="Digite sua mensagem"></textarea>
-                                <button type="submit" class="btn" style="height: fit-content; background-color: #00ffa1!important;">Enviar</button>
+
+                            <div class="imgProgBar d-none">
+                                <img src="" alt="" class="preview">
+                                <div class="barraProgresso"></div>
                             </div>
+
+                            <div class="input-group">
+                                <textarea name="" id="input" class="form-control output-text" placeholder="Digite sua mensagem"></textarea>
+                                <button type="submit" class="btn" style="height: fit-content; background-color: #00ffa1!important;">Enviar</button>
+                                <button class="btnAdcImagens btn bg-light" style="height: fit-content;">Inserir texto de Imagem</button>
+                                <input type="file" class="input-image d-none">
+                            </div>
+                        
                         </form>
                     </div>
                 </div>
@@ -63,7 +71,7 @@
                     <div class="wrapper">
                         <div class="profile-card js-profile-card">
                             <div class="profile-card__img">
-                                <img src="assets/imgs/user.png" alt="profile card">
+                                <img src="assets/imgs/user.png" id="profileModal" alt="profile card">
                             </div>
 
                             <div class="profile-card__cnt js-profile-cnt">
@@ -75,16 +83,6 @@
                                     <div class="profile-card-inf__item">
                                         <div class="profile-card-inf__title" id="userResgistro"></div>
                                         <div class="profile-card-inf__txt">Membro Desde</div>
-                                    </div>
-
-                                    <div class="profile-card-inf__item">
-                                        <div class="profile-card-inf__title" id="sendSms"></div>
-                                        <div class="profile-card-inf__txt">Mensagens Enviadas</div>
-                                    </div>
-
-                                    <div class="profile-card-inf__item">
-                                        <div class="profile-card-inf__title" id="receiveSms"></div>
-                                        <div class="profile-card-inf__txt">Mensagens Recebidas</div>
                                     </div>
                                 </div>
 
@@ -101,6 +99,7 @@
         </div>
     </div>
 
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
     <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/ionicons@4.5.10-0/dist/ionicons.js"></script>
@@ -109,6 +108,55 @@
 </html>
 <script src="/socket.io/socket.io.js"></script>
 <script>
+
+    // EXTRAIR TEXTO
+    const inputImage = document.querySelector('.input-image');
+    const btnAdcImage = document.querySelector('.btnAdcImagens');
+    const saidaTexto  = document.querySelector('.output-text');
+    const imagePreview = document.querySelector('.preview');
+    const barraProgresso = document.querySelector('.barraProgresso');
+
+    function controlarProgresso(n){
+        barraProgresso.style.width = `${n}%`; 
+    }
+
+    async function extrairTexto(img){
+      const worker = Tesseract.createWorker({
+        logger: function(m){
+            console.log(m);
+            controlarProgresso(m.progress * 100);
+        }
+      });
+       
+       document.querySelector('.imgProgBar').classList.remove('d-none');
+       await worker.load();
+       await worker.loadLanguage(['eng', 'por', 'fra']);
+       await worker.initialize(['eng', 'por', 'fra']);
+       const { data: { text } } = await worker.recognize(img);
+       saidaTexto.value = text;
+       document.querySelector('.imgProgBar').classList.add('d-none');
+       await worker.terminate();
+
+    }
+
+    btnAdcImage.addEventListener('click' , function(){
+        inputImage.click();
+    })
+
+    inputImage.addEventListener('change' , function(){
+        let fileImage = inputImage.files[0];
+
+        imagePreview.src = URL.createObjectURL(fileImage);
+
+        try{
+          extrairTexto(fileImage);
+
+        }catch(e){
+            console.log('erro' , e);
+        }
+
+    ;})
+
     var idUser = localStorage.getItem("idUser");
     console.log(idUser)
     var socket = io({ auth: { serverOffset: 0 } });
@@ -117,8 +165,10 @@
     var messages = document.getElementById('messages');
     var global_id_receptor = undefined;
     var global_language_receptor = undefined;
+    var global_profile_user = undefined;
     var global_language_user = undefined;
     var global_nome_receptor = undefined;
+    var global_myprofile = undefined;
 
     if (!idUser) {
         window.location.href = "index.html";
@@ -136,6 +186,7 @@
                 for (let index = 0; index < outrosUsuarios.length; index++) {
                     const username = outrosUsuarios[index].username;
                     const nome = outrosUsuarios[index].name;
+                    const profile1 = outrosUsuarios[index].profile;
                     const email = outrosUsuarios[index].language;
                     const id = outrosUsuarios[index].pk_user_id;
                     const dataregistro = new Date(outrosUsuarios[index].registrydate);
@@ -143,7 +194,7 @@
 
                     let temp = await verMensagens(idUser, id);
                     temp += await verMensagens(id, idUser);
-                    criarElementos(nome, id, temp)
+                    criarElementos(nome, id, temp, profile1)
                 }
             } else {
                 alert('Erro: Não foi possível carregar os dados, tente novamente');
@@ -160,6 +211,7 @@
                 let usuario = data.dados_perfil[0];
                 let outrosUsuarios = data.lista_contactos;
                 global_language_user = usuario.language;
+                global_myprofile = usuario.profile;
             } else {
                 alert('Erro: Não foi possível carregar os dados, tente novamente');
             }
@@ -169,7 +221,7 @@
         }
     });
 
-    function criarElementos(nomeUsuario, idTemp, totalMsg) {
+    function criarElementos(nomeUsuario, idTemp, totalMsg, profile1) {
         // Crie o elemento <a>
         let link = document.createElement('a');
         link.href = '#';
@@ -186,7 +238,7 @@
 
         // Crie o elemento <img> para a imagem do usuário
         let img = document.createElement('img');
-        img.src = 'assets/imgs/user.png';
+        img.src = `assets/imgs/${profile1}`;
         img.className = 'rounded-circle mr-1 userPic';
 
         // Crie o elemento <div> para o texto
@@ -237,11 +289,12 @@
                 global_id_receptor = usuario.pk_user_id;
                 console.log(`Receptor id: ${global_id_receptor}`)
                 global_language_receptor = usuario.language;
+                global_profile_user = usuario.profile;
                 global_nome_receptor = usuario.name;
 
                 removerElemento();
                 removerSms();
-                adicionarElemento(elementoAntes, usuario.name, usuario.language, usuario.email, `${dia}/${mes}/${ano}`, global_id_receptor);
+                adicionarElemento(elementoAntes, usuario.name, usuario.profile, usuario.language, usuario.email, `${dia}/${mes}/${ano}`, global_id_receptor);
 
             } else {
                 alert('Erro: Não foi possível carregar os dados, tente novamente');
@@ -284,7 +337,7 @@
                                 msgTemp = await traduzirTexto(msgTemp, responseData[index].msg_language, global_language_user);
                                 //console.log(`Tra: ${msgTemp}`);
                             }
-                            criarSmsReceiveLeft(global_nome_receptor, msgTemp, `${dia}/${mes} ${hora}:${min}`);
+                            criarSmsReceiveLeft(global_nome_receptor, global_profile_user, msgTemp, `${dia}/${mes} ${hora}:${min}`);
                             messages.scrollTo({
                                 top: messages.scrollHeight,
                                 behavior: 'smooth'
@@ -358,7 +411,7 @@
 
     }
 
-    function adicionarElemento(elemento, nome, lingua, email, dataResgistro, id) {
+    function adicionarElemento(elemento, nome, profile2, lingua, email, dataResgistro, id) {
 
         // Crie o elemento <div> principal
         let divPrincipal = document.createElement('div');
@@ -373,7 +426,7 @@
         let divImagem = document.createElement('div');
         divImagem.className = 'position-relative';
         let imgUsuario = document.createElement('img');
-        imgUsuario.src = 'assets/imgs/user.png';
+        imgUsuario.src = `assets/imgs/${profile2}`;
         imgUsuario.className = 'rounded-circle mr-1 userPic';
         divImagem.appendChild(imgUsuario);
 
@@ -416,13 +469,14 @@
 
         // Adicione o elemento à sua estrutura de árvore
         document.getElementById("py1").insertBefore(divPrincipal, elemento);
-        actualizarPerfil(nome, lingua, email, dataResgistro, id)
+        actualizarPerfil(nome, lingua, email, dataResgistro, id, profile2)
 
     }
 
-    async function actualizarPerfil(nome, lingua, email, dataResgistro, id) {
+    async function actualizarPerfil(nome, lingua, email, dataResgistro, id, profile2) {
 
         document.getElementById("userNameModal").textContent = nome;
+        document.getElementById("profileModal").src = `assets/imgs/${profile2}`;
         document.getElementById("userEmailModal").textContent = email;
         document.getElementById("userResgistro").textContent = dataResgistro;
         document.getElementById("bandeira").src = `assets/imgs/${lingua}.png`;
@@ -434,9 +488,11 @@
             if (response.ok) {
                 let data = await response.json()
                 if ("Não há mensagem nessa conversa" === data[0].msg) {
-                    document.getElementById("sendSms").textContent = "0";
+                    // document.getElementById("sendSms").textContent = "0";
+                    console.clear();
                 } else {
-                    document.getElementById("sendSms").textContent = `${data.length}`;
+                    // document.getElementById("sendSms").textContent = `${data.length}`;
+                    console.clear();
                 }
 
             } else {
@@ -454,9 +510,11 @@
             if (response.ok) {
                 let data = await response.json()
                 if ("Não há mensagem nessa conversa" === data[0].msg) {
-                    document.getElementById("receiveSms").textContent = "0";
+                    // document.getElementById("receiveSms").textContent = "0";
+                    console.clear();
                 } else {
-                    document.getElementById("receiveSms").textContent = `${data.length}`;
+                    // document.getElementById("receiveSms").textContent = `${data.length}`;
+                    console.clear();
                 }
 
             } else {
@@ -507,7 +565,7 @@
 
         // Adicione a imagem ao primeiro sub-elemento
         let imgUsuario = document.createElement('img');
-        imgUsuario.src = 'assets/imgs/user.png';
+        imgUsuario.src = `assets/imgs/` + global_myprofile;
         imgUsuario.className = 'rounded-circle mr-1 userPic';
         divPrimeiro.appendChild(imgUsuario);
 
@@ -556,7 +614,7 @@
 
     }
 
-    function criarSmsReceiveLeft(nome, texto, dataSms) {
+    function criarSmsReceiveLeft(nome, profile4, texto, dataSms) {
         // Crie o elemento <div> principal
         let divPrincipal = document.createElement('div');
         divPrincipal.className = 'chat-message-left pb-4';
@@ -566,7 +624,7 @@
 
         // Adicione a imagem ao primeiro sub-elemento
         let imgUsuario = document.createElement('img');
-        imgUsuario.src = 'assets/imgs/user.png';
+        imgUsuario.src = `assets/imgs/${profile4}`;
         imgUsuario.className = 'rounded-circle mr-1 userPic';
         divPrimeiro.appendChild(imgUsuario);
 
@@ -648,7 +706,7 @@
                         if (global_language_user !== responseData.msg_language) {
                             msgTemp = await traduzirTexto(msgTemp, responseData.msg_language, global_language_user);
                         }
-                        criarSmsReceiveLeft(global_nome_receptor, msgTemp);
+                        criarSmsReceiveLeft(global_nome_receptor, global_profile_user, msgTemp);
                         messages.scrollTo({
                             top: messages.scrollHeight,
                             behavior: 'smooth'

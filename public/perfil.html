@@ -137,6 +137,19 @@
     </div>
   </main>
 
+  <style>
+    /*PROFILEPIC*/
+    ul.profilepic {list-style-type: none; padding-left: 0;display: flex;flex-wrap: wrap;justify-content: center;}
+    .profilepic li {display: inline-block;}
+    input[type="radio"] {display: none;}
+    .profilepic label {border: 1px solid #fff;padding: 10px;display: block;position: relative;margin: 10px;cursor: pointer;}
+    .profilepic label:before {background-color: white;color: white;content: " ";display: block;border-radius: 50%;border: 1px solid grey;position: absolute;top: -5px;left: -5px;width: 25px;height: 25px;text-align: center;line-height: 28px;transition-duration: 0.4s;transform: scale(0);}
+    .profilepic label img {height: 40px;width: 40px;transition-duration: 0.2s;transform-origin: 50% 50%;}
+    :checked + label {border-color: #ddd;}
+    :checked + label:before {content: "✓";background-color: grey;transform: scale(1);}
+    :checked + label img {transform: scale(0.9);box-shadow: 0 0 5px #333;z-index: -1;}
+  </style>
+
   <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -148,6 +161,47 @@
         </div>
         <div class="modal-body">
           <form id="formUpdate">
+            <ul class="profilepic">
+              <li><input type="radio" name="profilepic" id="profilepicUser" value="user.png" checked/>
+                <label for="profilepicUser"><img src="assets/imgs/user.png"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic1" value="1.jpeg"/>
+                <label for="profilepic1"><img src="assets/imgs/1.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic2" value="2.jpeg"/>
+                <label for="profilepic2"><img src="assets/imgs/2.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic3" value="3.jpeg"/>
+                <label for="profilepic3"><img src="assets/imgs/3.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic4" value="4.jpeg"/>
+                <label for="profilepic4"><img src="assets/imgs/4.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic5" value="5.jpeg"/>
+                <label for="profilepic5"><img src="assets/imgs/5.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic6" value="6.jpeg"/>
+                <label for="profilepic6"><img src="assets/imgs/6.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic7" value="7.jpeg"/>
+                <label for="profilepic7"><img src="assets/imgs/7.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic8" value="8.jpeg"/>
+                <label for="profilepic8"><img src="assets/imgs/8.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic9" value="9.jpeg"/>
+                <label for="profilepic9"><img src="assets/imgs/9.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic10" value="10.jpeg"/>
+                <label for="profilepic10"><img src="assets/imgs/10.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic11" value="11.jpeg"/>
+                <label for="profilepic11"><img src="assets/imgs/11.jpeg"/></label>
+              </li>
+              <li><input type="radio" name="profilepic" id="profilepic12" value="12.jpeg"/>
+                <label for="profilepic12"><img src="assets/imgs/12.jpeg"/></label>
+              </li>
+            </ul>
             <div class="form-group">
               <label for="exampleFormControlInput1">Nome</label>
               <input type="text" class="form-control" id="nome" placeholder="Nome">
@@ -204,6 +258,8 @@
 
         document.getElementById("nomeUsuario1").textContent = usuario.name;
         document.getElementById("nomeUsuario2").textContent = usuario.name;
+        document.getElementById("userPic2").src = `assets/imgs/${usuario.profile}`;
+        document.getElementById("userPic").src = `assets/imgs/${usuario.profile}`;
         document.getElementById("emailUsuario2").textContent = usuario.email;
         document.getElementById("bandeira").src = `assets/imgs/${usuario.language}.png`;
         document.getElementById("dataConta").textContent = `${dia}/${mes}/${ano}`;
@@ -260,21 +316,24 @@
 
   document.getElementById("formUpdate").addEventListener("submit", function (event) {
     event.preventDefault();
+
     var nome = document.getElementById("nome").value;
     var email = document.getElementById("email").value;
     var lingua = document.getElementById("lingua").value;
     var password = document.getElementById("password").value;
+    var profile = document.querySelector('input[name="profilepic"]:checked').value;
 
     email = email.toLowerCase();
 
     // Objeto com os dados a serem enviados na requisição
     var data = {
+      profile: profile,
       name: nome,
       email: email,
       language: lingua,
       password: password
     };
-
+    alert(data.profile);
     // Requisição POST para o servidor (substitua a URL pela URL real do seu backend)
     fetch(`http://localhost:3000/user/${idUser}/update`, {
       method: "PUT",
@@ -292,7 +351,7 @@
       .then(data => {
         document.getElementById("formUpdate").reset();
         alert(data[0].msg)
-        window.location.reload()
+        window.location.reload();
       })
       .catch(error => {
         console.error('Erro:', error);
