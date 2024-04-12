@@ -689,17 +689,16 @@
         }
     });
 
-    socket.on('chat message', async function (msg, msgId, idSender, idReceiver) {
-        console.log(`Msg:${msg}, ${msgId}, ${idSender}, ${idReceiver}`);
-        if (msg.length !== 0 && idUser !== idSender) {
+    socket.on('chat message', async function (msg, msgId, idSender, idReceiver, chaveChat) {
+        let desbloChat1 = parseInt(idUser + global_id_receptor)
+        let desbloChat2 = parseInt(global_id_receptor + idUser)
+        if (msg.length !== 0 && idUser !== idSender && (chaveChat === desbloChat1 || chaveChat === desbloChat2)) {
             try {
 
                 const response = await fetch(`http://localhost:3000/home/messages/last/${global_id_receptor}/${idUser}`);
                 if (response.ok) {
                     const responseData = await response.json();
-                    console.log(msg)
-                    console.log(responseData.msg);
-                    console.log(`${global_language_user} - ${responseData.msg_language}`);
+                    
                     if (responseData.msg !== undefined) {
                         let msgTemp = responseData.msg;
 
@@ -723,11 +722,4 @@
             }
         }
     });
-
-
-    /*
-    window.addEventListener('load', async function () {
-        
-    });
-    */
 </script>

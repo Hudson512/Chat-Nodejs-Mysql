@@ -332,6 +332,7 @@ function base62Encrypt(str) {
 io.on('connection', async (socket) => {
 
     socket.on('chat message', async (msg, user_sender_id, user_reciever_id, languageSender, languageReceiver) => {
+        var chaveChat = parseInt(user_sender_id + user_reciever_id)
         try {
             if (msg.length !== 0) {
                 db.query('INSERT INTO messages (fk_sender_id, fk_reciever_id, msg, msg_language) VALUES (?, ?, ?, ?)', [user_sender_id, user_reciever_id, msg, languageSender], (err, results) => {
@@ -342,7 +343,7 @@ io.on('connection', async (socket) => {
                     global.languageEmissor = languageSender;
                     global.languageReceptor = languageReceiver;
                     console.log(msg)
-                    io.emit('chat message', msg, global.msgSendId, user_sender_id, user_reciever_id);
+                    io.emit('chat message', msg, global.msgSendId, user_sender_id, user_reciever_id, chaveChat);
                 });
             }
         } catch (e) {
